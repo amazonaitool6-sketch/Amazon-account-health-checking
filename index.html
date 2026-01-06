@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazon Seller Account Health Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ffffff 0%, #e9d5ff 50%, #c084fc 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #FF9900 0%, #FF6600 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .account-selector {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .account-selector label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .account-selector select {
+            padding: 10px 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .account-selector select:hover {
+            border-color: #FF9900;
+        }
+
+        .date-display {
+            margin-left: auto;
+            font-weight: bold;
+            color: #666;
+            padding: 10px 20px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .dashboard {
+            padding: 30px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-left: 5px solid #ddd;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .metric-card.good {
+            border-left-color: #28a745;
+        }
+
+        .metric-card.warning {
+            border-left-color: #ffc107;
+        }
+
+        .metric-card.critical {
+            border-left-color: #dc3545;
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .metric-title {
+            font-size: 0.9em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .metric-icon {
+            font-size: 1.5em;
+        }
+
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .metric-target {
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        .metric-status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .status-good {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-critical {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #FF9900;
+        }
+
+        .checklist {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .checklist-category {
+            margin-bottom: 25px;
+        }
+
+        .category-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .category-header:hover {
+            opacity: 0.9;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 12px;
+            border-bottom: 1px solid #e9ecef;
+            transition: background 0.2s;
+        }
+
+        .checklist-item:hover {
+            background: #f8f9fa;
+        }
+
+        .checklist-item:last-child {
+            border-bottom: none;
+        }
+
+        .checklist-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 15px;
+            cursor: pointer;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .checklist-item label {
+            cursor: pointer;
+            flex-grow: 1;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .checklist-item.completed label {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        .priority-badge {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .priority-high {
+            background: #dc3545;
+            color: white;
+        }
+
+        .priority-medium {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .priority-low {
+            background: #28a745;
+            color: white;
+        }
+
+        .action-items {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .action-item {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+        }
+
+        .action-item.urgent {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+
+        .action-item-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .action-item-desc {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .quick-link {
+            background: linear-gradient(135deg, #FF9900 0%, #FF6600 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            font-weight: bold;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .quick-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(255, 153, 0, 0.4);
+        }
+
+        .footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9em;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 10px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+            transition: width 0.5s;
+        }
+
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .time-slot {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+        }
+
+        .time-slot-header {
+            font-weight: bold;
+            color: #FF9900;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .time-slot-time {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .time-slot ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .time-slot li {
+            padding: 5px 0;
+            color: #555;
+        }
+
+        .sheet-guide {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .sheet-guide h3 {
+            color: #FF9900;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .sheet-guide h4 {
+            color: #667eea;
+            margin: 20px 0 10px 0;
+            font-size: 1.1em;
+        }
+
+        .sheet-guide p {
+            line-height: 1.8;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .sheet-guide ul, .sheet-guide ol {
+            margin-left: 20px;
+            line-height: 1.8;
+            color: #555;
+        }
+
+        .sheet-guide li {
+            margin-bottom: 8px;
+        }
+
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+        }
+
+        .table-example {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        .table-example th, .table-example td {
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .table-example th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .tip-box {
+            background: #d1ecf1;
+            border-left: 4px solid #0c5460;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .tip-box strong {
+            color: #0c5460;
+        }
+
+        @media (max-width: 768px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .account-selector {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .date-display {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Amazon Seller Account Health Dashboard</h1>
+            <p>Daily Performance Monitoring & Checklist</p>
+        </div>
+
+        <div class="account-selector">
+            <label for="account">Select Account:</label>
+            <select id="account" onchange="updateDashboard()">
+                <option value="ledsone">LEDSone</option>
+                <option value="dcvoltage">DCVoltage</option>
+                <option value="srm">SRM</option>
+                <option value="homin">Homin GmbH</option>
+            </select>
+            <div class="date-display">
+                📅 <span id="currentDate"></span>
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <!-- Key Metrics Grid -->
+            <div class="metrics-grid">
+                <div class="metric-card good">
+                    <div class="metric-header">
+                        <span class="metric-title">Account Health</span>
+                        <span class="metric-icon">💚</span>
+                    </div>
+                    <div class="metric-value" id="accountHealth">215</div>
+                    <div class="metric-target">Target: 200+</div>
+                    <span class="metric-status status-good">Healthy</span>
+                </div>
+
+                <div class="metric-card good">
+                    <div class="metric-header">
+                        <span class="metric-title">Order Defect Rate</span>
+                        <span class="metric-icon">📦</span>
+                    </div>
+                    <div class="metric-value" id="odr">0.4%</div>
+                    <div class="metric-target">Target: &lt;1%</div>
+                    <span class="metric-status status-good">On Track</span>
+                </div>
+
+                <div class="metric-card good">
+                    <div class="metric-header">
+                        <span class="metric-title">Late Shipment Rate</span>
+                        <span class="metric-icon">🚚</span>
+                    </div>
+                    <div class="metric-value" id="lsr">1.8%</div>
+                    <div class="metric-target">Target: &lt;4%</div>
+                    <span class="metric-status status-good">Good</span>
+                </div>
+
+                <div class="metric-card warning">
+                    <div class="metric-header">
+                        <span class="metric-title">Messages Pending</span>
+                        <span class="metric-icon">💬</span>
+                    </div>
+                    <div class="metric-value" id="messages">5</div>
+                    <div class="metric-target">Respond within 24hrs</div>
+                    <span class="metric-status status-warning">Action Needed</span>
+                </div>
+
+                <div class="metric-card good">
+                    <div class="metric-header">
+                        <span class="metric-title">Open Cases</span>
+                        <span class="metric-icon">📋</span>
+                    </div>
+                    <div class="metric-value" id="cases">2</div>
+                    <div class="metric-target">Resolve within deadline</div>
+                    <span class="metric-status status-good">Under Control</span>
+                </div>
+
+                <div class="metric-card warning">
+                    <div class="metric-header">
+                        <span class="metric-title">Unshipped Orders</span>
+                        <span class="metric-icon">📮</span>
+                    </div>
+                    <div class="metric-value" id="unshipped">12</div>
+                    <div class="metric-target">Ship by today: 3</div>
+                    <span class="metric-status status-warning">Ship Today!</span>
+                </div>
+            </div>
+
+            <!-- Daily Progress -->
+            <div class="section">
+                <div class="section-title">📊 Today's Progress</div>
+                <div style="padding: 20px; background: white; border-radius: 8px;">
+                    <p style="margin-bottom: 10px;">Daily Checklist Completion: <strong><span id="progressPercent">0</span>%</strong></p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Time-Based Routine -->
+            <div class="section">
+                <div class="section-title">⏰ Daily Routine Schedule</div>
+                <div class="time-slots">
+                    <div class="time-slot">
+                        <div class="time-slot-header">🌅 Morning Routine</div>
+                        <div class="time-slot-time">9:00 AM - 10:30 AM (2 hours)</div>
+                        <ul>
+                            <li>✓ Account Health check</li>
+                            <li>✓ Notifications review</li>
+                            <li>✓ Messages - respond to overdues</li>
+                            <li>✓ Ship today's orders</li>
+                            <li>✓ Critical emails</li>
+                        </ul>
+                    </div>
+
+                    <div class="time-slot">
+                        <div class="time-slot-header">☀️ Afternoon Check</div>
+                        <div class="time-slot-time">2:00 PM - 3:00 PM (1 hour)</div>
+                        <ul>
+                            <li>✓ ODR components check</li>
+                            <li>✓ Cancelled orders review</li>
+                            <li>✓ Price & stock monitoring</li>
+                            <li>✓ Verify tracking uploads</li>
+                            <li>✓ LSR review</li>
+                        </ul>
+                    </div>
+
+                    <div class="time-slot">
+                        <div class="time-slot-header">🌙 Evening Wrap-up</div>
+                        <div class="time-slot-time">6:00 PM - 6:30 PM (30 mins)</div>
+                        <ul>
+                            <li>✓ Check new messages</li>
+                            <li>✓ Prepare tomorrow's orders</li>
+                            <li>✓ Dashboard final review</li>
+                            <li>✓ Update action items</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Checklist -->
+            <div class="section">
+                <div class="section-title">✅ Daily Checklist - Step by Step</div>
+                <div class="checklist">
+                    <!-- Morning Tasks -->
+                    <div class="checklist-category">
+                        <div class="category-header" onclick="toggleCategory('morning')">
+                            🌅 Morning Tasks (9:00 - 10:30 AM)
+                            <span id="morning-toggle">▼</span>
+                        </div>
+                        <div id="morning">
+                            <div class="checklist-item">
+                                <input type="checkbox" id="m1" onchange="updateProgress()">
+                                <label for="m1">Check Account Health Score (Target: 200+) <span class="priority-badge priority-high">HIGH</span></label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="m2" onchange="updateProgress()">
+                                <label for="m2">Verify ODR, LSR, Cancellation Rate (ODR &lt;1%, LSR &lt;4%) <span class="priority-badge priority-high">HIGH</span></label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="m3" onchange="updateProgress()">
+                                <label for="m3">Read all Performance Notifications <span class="priority-badge priority-high">HIGH</span></label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="m4" onchange="updateProgress()">
+                                <label for="m4">Respond to overdue buyer messages (24hr deadline!) <span class="priority-badge priority-high">HIGH</span></label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="m5" onchange="updateProgress()">
+                                <label for="m5">Pack and ship today's orders - upload tracking <span class="priority-badge priority-high">HIGH</span></label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="m6" onchange="updateProgress()">
+                                <label for="m6">Identify late orders - create immediate action plan <span class="priority-badge priority-high">HIGH</span></label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="m7" onchange="updateProgress()">
+                                <label for="m7">Respond to critical emails (Action Required) <span class="priority-badge priority-medium">MEDIUM</span></label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="m8" onchange="updateProgress()">
+                                <label for="m8">Respond to open cases - check deadlines <span class="priority-badge priority-medium">MEDIUM</span></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Afternoon Tasks -->
+                    <div class="checklist-category">
+                        <div class="category-header" onclick="toggleCategory('afternoon')">
+                            ☀️ Afternoon Tasks (2:00 - 3:00 PM)
+                            <span id="afternoon-toggle">▼</span>
+                        </div>
+                        <div id="afternoon">
+                            <div class="checklist-item">
+                                <input type="checkbox" id="a1" onchange="updateProgress()">
+                                <label for="a1">Check A-to-Z claims, Negative feedback, Chargebacks <span class="priority-badge priority-high">HIGH</span></label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="a2" onchange="updateProgress()">
+                                <label for="a2">Review cancelled orders - analyze reasons <span class="priority-badge priority-medium">MEDIUM</span></label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="a3" onchange="updateProgress()">
+                                <label for="a3">Check stock levels - reorder low stock items <span class="priority-badge priority-high">HIGH</span></label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="a4" onchange="updateProgress()">
+                                <label for="a4">Check Buy Box status - is pricing competitive? <span class="priority-badge priority-medium">MEDIUM</span></label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="a5" onchange="updateProgress()">
+                                <label for="a5">Verify all tracking numbers are uploaded <span class="priority-badge priority-medium">MEDIUM</span></label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="a6" onchange="updateProgress()">
+                                <label for="a6">Check policy violation alerts - prepare POA if needed <span class="priority-badge priority-high">HIGH</span></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Evening Tasks -->
+                    <div class="checklist-category">
+                        <div class="category-header" onclick="toggleCategory('evening')">
+                            🌙 Evening Tasks (6:00 - 6:30 PM)
+                            <span id="evening-toggle">▼</span>
+                        </div>
+                        <div id="evening">
+                            <div class="checklist-item">
+                                <input type="checkbox" id="e1" onchange="updateProgress()">
+                                <label for="e1">Final check for new messages - any responses needed? <span class="priority-badge priority-medium">MEDIUM</span></label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="e2" onchange="updateProgress()">
+                                <label for="e2">Prepare tomorrow's ship by orders - is stock ready? <span class="priority-badge priority-high">HIGH</span></label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="e3" onchange="updateProgress()">
+                                <label for="e3">Review all account dashboards (LEDSone, DCVoltage, SRM, Homin) <span class="priority-badge priority-medium">MEDIUM</span></label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="e4" onchange="updateProgress()">
+                                <label for="e4">Document action items - set tomorrow's priorities <span class="priority-badge priority-low">LOW</span></label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="e5" onchange="updateProgress()">
+                                <label for="e5">Update Google Sheet with today's data <span class="priority-badge priority-low">LOW</span></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Checks -->
+                    <div class="checklist-category">
+                        <div class="category-header" onclick="toggleCategory('additional')">
+                            📋 Additional Checks (As Needed)
+                            <span id="additional-toggle">▼</span>
+                        </div>
+                        <div id="additional">
+                            <div class="checklist-item">
+                                <input type="checkbox" id="ad1" onchange="updateProgress()">
+                                <label for="ad1">Fix stranded inventory <span class="priority-badge priority-medium">MEDIUM</span></label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="ad2" onchange="updateProgress()">
+                                <label for="ad2">Reactivate suppressed listings <span class="priority-badge priority-medium">MEDIUM</span></label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="ad3" onchange="updateProgress()">
+                                <label for="ad3">Create FBA shipment plans if stock is low <span class="priority-badge priority-low">LOW</span></label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="ad4" onchange="updateProgress()">
+                                <label for="ad4">Review advertising campaign performance <span class="priority-badge priority-low">LOW</span></label>
+                            </div>
+                            <div class="checklist-item">
+                                <input type="checkbox" id="ad5" onchange="updateProgress()">
+                                <label for="ad5">Approve/deny return requests <span class="priority-badge priority-medium">MEDIUM</span></label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Items -->
+            <div class="section">
+                <div class="section-title">🚨 Today's Action Items</div>
+                <div class="action-items">
+                    <div class="action-item urgent">
+                        <div class="action-item-title">🔴 URGENT: 3 Orders Late - Ship Immediately</div>
+                        <div class="action-item-desc">Orders #123, #456, #789 are past ship by date. Pack and ship with expedited courier!</div>
+                    </div>
+                    <div class="action-item">
+                        <div class="action-item-title">⚠️ 5 Products Low Stock (&lt; 7 days)</div>
+                        <div class="action-item-desc">ASINs: LED-001, LED-005, LED-012, DC-003, DC-008 - Contact supplier for reorder</div>
+                    </div>
+                    <div class="action-item">
+                        <div class="action-item-title">💬 2 Customer Messages Overdue</div>
+                        <div class="action-item-desc">Respond within 2 hours to maintain response rate target</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Google Sheets Guide -->
+            <div class="section">
+                <div class="section-title">📊 Google Sheets Setup Guide</div>
+                <div class="sheet-guide">
+                    <h3>🎯 How to Create Your Google Sheet Tracker</h3>
+                    
+                    <h4>Step 1: Create New Sheet</h4>
+                    <ol>
+                        <li>Go to <strong>sheets.google.com</strong></li>
+                        <li>Click <strong>Blank</strong> to create new sheet</li>
+                        <li>Name it: <strong>"Amazon Seller Health Tracker 2026"</strong></li>
+                    </ol>
+
+                    <h4>Step 2: Create 10 Tabs (Bottom of Sheet)</h4>
+                    <p>Click the <strong>+</strong> button at bottom to add tabs. Name them:</p>
+                    <ol>
+                        <li><strong>Daily Checklist</strong> - Main daily tracking</li>
+                        <li><strong>Account Health</strong> - Detailed metrics</li>
+                        <li><strong>Unshipped Orders</strong> - Order shipping tracker</li>
+                        <li><strong>Messages Log</strong> - Customer messages</li>
+                        <li><strong>Cases Tracker</strong> - Support cases</li>
+                        <li><strong>Stock Monitoring
